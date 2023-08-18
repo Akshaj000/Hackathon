@@ -1,0 +1,8 @@
+django==4.2.4
+djangorestframework==3.14.0
+djangorestframework_simplejwt==5.2.2
+django-cors-headers==4.2.0
+environs==9.5.0
+psycopg2-binary==2.9.7
+requests==2.31.0
+Pillow==10.0.0
