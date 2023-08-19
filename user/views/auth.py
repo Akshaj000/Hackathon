@@ -6,25 +6,9 @@ from user.models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
-from datetime import datetime, timedelta
 
 from user.serializers import UserRegistrationSerializer, UserLoginSerializer
-from user.authentication import CookieTokenAuthentication
-
-
-def set_token_cookies(response, access_token, refresh_token):
-    response.set_cookie(
-        key='ACCESS_TOKEN',
-        value=access_token,
-        expires=datetime.now() + timedelta(hours=1),
-        samesite='Lax'
-    )
-    response.set_cookie(
-        key='REFRESH_TOKEN',
-        value=refresh_token,
-        expires=datetime.now() + timedelta(days=30),
-        samesite='Lax'
-    )
+from user.authentication import CookieTokenAuthentication, set_token_cookies
 
 
 class UserLoginView(TokenObtainPairView):

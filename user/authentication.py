@@ -1,8 +1,25 @@
+from datetime import datetime, timedelta
+
 from rest_framework.authentication import BaseAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.http import JsonResponse
+
+
+def set_token_cookies(response, access_token, refresh_token):
+    response.set_cookie(
+        key='ACCESS_TOKEN',
+        value=access_token,
+        expires=datetime.now() + timedelta(hours=1),
+        samesite='Lax'
+    )
+    response.set_cookie(
+        key='REFRESH_TOKEN',
+        value=refresh_token,
+        expires=datetime.now() + timedelta(days=30),
+        samesite='Lax'
+    )
+    return response
 
 
 class CookieTokenAuthentication(BaseAuthentication):
@@ -26,15 +43,17 @@ class CookieTokenAuthentication(BaseAuthentication):
             try:
                 refresh_token = RefreshToken(refresh_token)
                 access_token = str(refresh_token.access_token)
-
-                response = JsonResponse({"message": "Token refreshed."})
-                response.set_cookie('ACCESS_TOKEN', access_token)
-                return None, response
+                user = authentication.get_user(refresh_token)
+                return user, {
+                    "ACCESS_TOKEN": access_token,
+                    "REFRESH_TOKEN": refresh_token,
+                }
             except Exception:
                 pass
         return None, None
 
 
 __all__ = [
-    'CookieTokenAuthentication'
+    'CookieTokenAuthentication',
+    'set_token_cookies'
 ]

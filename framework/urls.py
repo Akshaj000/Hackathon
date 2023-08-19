@@ -5,9 +5,10 @@ from user.views import (
     UserRegisterView, UserLoginView, UserLogoutView, ProfileView, UpdateProfileView, DeleteAccountView
 )
 from team.views import (
-    CreateTeamView, UpdateTeamView,AddTeamMembersView, RemoveTeamMembersView, LeaveTeamView,
+    CreateTeamView, UpdateTeamView, AddTeamMembersView, RemoveTeamMembersView, LeaveTeamView,
     TransferOwnershipView, DeleteTeamView
 )
+from hackathon.views import CreateHackathonView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,4 +29,8 @@ urlpatterns = [
     path('api/team/remove-members/', RemoveTeamMembersView.as_view()),
     path('api/team/leave/', LeaveTeamView.as_view()),
     path('api/team/transfer-ownership/', TransferOwnershipView.as_view()),
+
+
+    # Hackathon
+    path('api/hackathon/create/', CreateHackathonView.as_view()),
 ]

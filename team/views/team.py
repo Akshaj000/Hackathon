@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from team.models import Team, TeamMember
-from user.models import User
+from user.decorators import handle_refresh
 from user.authentication import CookieTokenAuthentication
 from team.serializers import TeamSerializer, CreateTeamSerializer, DeleteTeamSerializer, UpdateTeamSerializer
 from team.decorators import extract_member_ids, resolve_team
@@ -16,6 +16,7 @@ class CreateTeamView(APIView):
     serializer_class = CreateTeamSerializer
 
     @extract_member_ids
+    @handle_refresh
     def post(self, request, *args, **kwargs):
         data = request.data
         username = data.get('username')
@@ -49,9 +50,8 @@ class CreateTeamView(APIView):
         if request.user.id in member_user_ids:
             member_user_ids.remove(request.user.id)
         for userID in member_user_ids:
-            user = User.objects.get(id=userID)
             TeamMember.objects.create(
-                user=user,
+                user_id=userID,
                 team=team
             )
         serializer = TeamSerializer(team)
@@ -64,6 +64,7 @@ class UpdateTeamView(APIView):
     serializer_class = UpdateTeamSerializer
 
     @resolve_team
+    @handle_refresh
     def post(self, request, *args, **kwargs):
         data = request.data
         team = self.team
@@ -81,6 +82,7 @@ class DeleteTeamView(APIView):
     serializer_class = DeleteTeamSerializer
 
     @resolve_team
+    @handle_refresh
     def post(self, request, *args, **kwargs):
         # TODO: Add more logic incase the team is already registered for a hackathon
         user = request.user

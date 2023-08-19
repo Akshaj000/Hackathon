@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from team.models import TeamMember
+from user.decorators import handle_refresh
 from user.models import User
 from user.authentication import CookieTokenAuthentication
 from team.serializers import TeamSerializer, UpdateTeamMemberSerializer
@@ -17,6 +18,7 @@ class AddTeamMembersView(APIView):
 
     @resolve_team
     @extract_member_ids
+    @handle_refresh
     def post(self, request, *args, **kwargs):
         data = request.data
         team = self.team
@@ -60,6 +62,7 @@ class RemoveTeamMembersView(APIView):
     serializer_class = UpdateTeamMemberSerializer
 
     @resolve_team
+    @handle_refresh
     @extract_member_ids
     def post(self, request, *args, **kwargs):
         team = self.team
@@ -97,6 +100,7 @@ class LeaveTeamView(APIView):
     serializer_class = UpdateTeamMemberSerializer
 
     @resolve_team
+    @handle_refresh
     def post(self, request, *args, **kwargs):
         team = self.team
         if team.members.filter(user=request.user, isOwner=True).exists():
@@ -120,6 +124,7 @@ class TransferOwnershipView(APIView):
     serializer_class = UpdateTeamMemberSerializer
 
     @resolve_team
+    @handle_refresh
     def post(self, request, *args, **kwargs):
         data = request.data
         newOwnerID = data.get('newOwnerID')

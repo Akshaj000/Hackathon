@@ -2,15 +2,19 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
 from rest_framework.response import Response
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
+from user.decorators import handle_refresh
 from user.models import User
 from user.authentication import CookieTokenAuthentication
 from user.serializers import UserSerializer, DeleteProfileSerializer
 
 
 class ProfileView(APIView):
-    authentication_classes = [CookieTokenAuthentication]
+    authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    @handle_refresh
     def get(self, request, *args, **kwargs):
         user = request.user
         serializer = UserSerializer(user)
@@ -18,10 +22,11 @@ class ProfileView(APIView):
 
 
 class UpdateProfileView(APIView):
-    authentication_classes = [CookieTokenAuthentication]
+    authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer
 
+    @handle_refresh
     def post(self, request, *args, **kwargs):
         data = request.data
         user = request.user
@@ -55,7 +60,7 @@ class UpdateProfileView(APIView):
 
 
 class DeleteAccountView(APIView):
-    authentication_classes = [CookieTokenAuthentication]
+    authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
     serializer_class = DeleteProfileSerializer
 
