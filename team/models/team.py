@@ -2,9 +2,10 @@ from django.db import models
 
 
 class Team(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    username = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
-    members = models.ManyToManyField("user.User", through='team.TeamMember')
     timestampCreated = models.DateTimeField(auto_now_add=True)
     meta = models.JSONField(default=dict)
 
@@ -19,6 +20,4 @@ class Team(models.Model):
 __all__ = [
     'Team',
 ]
-
-
 

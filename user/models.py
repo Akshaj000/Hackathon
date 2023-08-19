@@ -23,7 +23,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email']
 
-    id = models.AutoField(primary_key=True),
+    id = models.AutoField(primary_key=True)
 
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=100, unique=True)

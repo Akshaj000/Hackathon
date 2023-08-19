@@ -4,6 +4,7 @@ from django.db import models
 class TeamMember(models.Model):
     user = models.ForeignKey("user.User", on_delete=models.CASCADE)
     team = models.ForeignKey("team.Team", on_delete=models.CASCADE)
+    isOwner = models.BooleanField(default=False)
     meta = models.JSONField(default=dict)
 
     class Meta:

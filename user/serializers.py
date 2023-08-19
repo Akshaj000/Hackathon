@@ -63,8 +63,17 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('username', 'email', 'name', 'bio', 'avatar')
 
 
+class DeleteProfileSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(required=True)
+
+    class Meta:
+        model = User
+        fields = ('password',)
+
+
 __all__ = [
     'UserRegistrationSerializer',
     'UserLoginSerializer',
-    'UserSerializer'
+    'UserSerializer',
+    'DeleteProfileSerializer'
 ]
