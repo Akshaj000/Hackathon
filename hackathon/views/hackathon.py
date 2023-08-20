@@ -3,89 +3,89 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from hackathon.decorators import resolve_hackathon
 from hackathon.models import Hackathon, Organiser
 from user.authentication import CookieTokenAuthentication
-from hackathon.serializers import HackathonSerializer, CreateHackathonSerializer
+from hackathon.serializers import HackathonOutputSerializer, CreateHackathonInputSerializer, DeleteHackathonInputSerializer
 from user.decorators import handle_refresh
 from user.models import User
 
 
-class CreateHackathonView(APIView):
+class PublishHackathonView(APIView):
     authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    serializer_class = CreateHackathonSerializer
+    serializer_class = CreateHackathonInputSerializer
 
     @handle_refresh
     def post(self, request, *args, **kwargs):
 
         data = request.data
-        title = data.get('title')
-        description = data.get('description')
-        logo = data.get('logo')
-        cover = data.get('cover')
-        allowedSubmissionType = data.get('allowedSubmissionType')
-        minimumTeamSize = data.get('minimumTeamSize')
-        allowIndividual = data.get('allowIndividualSubmission')
-        startTimestamp = data.get('startTimestamp')
-        endTimestamp = data.get('endTimestamp')
-        pricePool = data.get('pricePool')
-        organisers = data.get('organisers')
-
-        for fields in [title, description, allowedSubmissionType, minimumTeamSize, allowIndividual, startTimestamp, endTimestamp, pricePool]:
-            if not fields:
+        for fields in ["title", "description", "allowedSubmissionType", "startTimestamp", "endTimestamp", "pricePool"]:
+            if not data.get(fields):
                 return Response({
                     'error': {
-                        'code': 'FIELD_REQUIRED',
-                        'message': 'All fields are required'
+                        'code': 'MISSING_FIELD',
+                        'message': f'{fields} is required'
                     }
                 }, status=400)
+        if not (data.get('maximumTeamSize') and data.get('minimumTeamSize')) and data.get('allowIndividual'):
+            return Response({
+                'error': {
+                    'code': 'MISSING_FIELD',
+                    'message': 'teamSizes or allowIndividual is required'
+                }
+            }, status=400)
 
+        # Create hackathon
         hackathon = Hackathon.objects.create(
-            title=title,
-            description=description,
-            allowedSubmissionType=allowedSubmissionType,
-            minimumTeamSize=minimumTeamSize,
-            allowIndividual=allowIndividual,
-            startTimestamp=startTimestamp,
-            endTimestamp=endTimestamp,
-            pricePool=pricePool
+            title=data.get('title'),
+            description=data.get('description'),
+            allowedSubmissions=data.get('allowedSubmissions'),
+            maximumTeamSize=data.get('maximumTeamSize', 0),
+            minimumTeamSize=data.get('minimumTeamSize', 0),
+            allowIndividual=data.get('allowIndividual', False),
+            startTimestamp=data.get('startTimestamp'),
+            endTimestamp=data.get('endTimestamp'),
+            pricePool=data.get('pricePool'),
         )
-        if logo:
-            hackathon.logo = logo
-        if cover:
-            hackathon.cover = cover
+        if "logo" in data and data.get('logo'):
+            hackathon.logo = data.get('logo')
+        if "cover" in data and data.get('cover'):
+            hackathon.cover = data.get('cover')
+        # Create organiser for the hackathon
         Organiser.objects.create(
             user=request.user,
             hackathon=hackathon,
-            access='admin'
+            access=0
         )
-        if request.user.id in [organiser.userID for organiser in organisers]:
-            element = organisers.pop([organiser.userID for organiser in organisers].index(request.user.id))
-            organisers.remove(element)
-        for organiser in organisers:
-            if not User.objects.filter(username=organiser.username).exists():
+        if data.get('organisers'):
+            if User.objects.filter(id__in=[organiser.get('userID') for organiser in data.get('organisers')]).count() != len(data.get('organisers')):
                 return Response({
                     'error': {
-                        'code': 'USER_NOT_FOUND',
-                        'message': 'User not found'
+                        'code': 'INVALID_USER',
+                        'message': 'Invalid user ID'
                     }
                 }, status=400)
-            Organiser.objects.create(
-                user_id=organiser.userID,
-                hackathon=hackathon,
-                access=organiser.access
-            )
+            for organiser in data.get('organisers'):
+                if organiser.get('userID') == request.user.id:
+                    continue
+                Organiser.objects.create(
+                    user_id=organiser.get('userID'),
+                    hackathon=hackathon,
+                    access=organiser.get('access')
+                )
         hackathon.save()
-        serializer = HackathonSerializer(hackathon)
+        serializer = HackathonOutputSerializer(hackathon)
         return Response(serializer.data, status=200)
 
 
 class UpdateHackathonView(APIView):
     authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    serializer_class = CreateHackathonSerializer
+    serializer_class = CreateHackathonInputSerializer
 
     @handle_refresh
+    @resolve_hackathon("editor")
     def post(self, request, *args, **kwargs):
         data = request.data
         hackathon = self.hackathon
@@ -110,21 +110,35 @@ class UpdateHackathonView(APIView):
         if data.get('pricePool'):
             hackathon.pricePool = data.get('pricePool')
         hackathon.save()
-        serializer = HackathonSerializer(hackathon)
+        serializer = HackathonOutputSerializer(hackathon)
         return Response(serializer.data, status=200)
 
 
 class DeleteHackathonView(APIView):
     authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
+    serializer_class = DeleteHackathonInputSerializer
 
     @handle_refresh
+    @resolve_hackathon("admin")
     def post(self, request, *args, **kwargs):
+        user = request.user
+        data = request.data
+        user_password = data.get('password')
         hackathon = self.hackathon
+        if not user.check_password(user_password):
+            return Response({
+                'error': {
+                    'code': 'INVALID_PASSWORD',
+                    'message': 'Invalid password'
+                }
+            }, status=400)
         hackathon.delete()
         return Response(status=200)
 
 
 __all__ = [
-    'CreateHackathonView',
+    'PublishHackathonView',
+    'UpdateHackathonView',
+    'DeleteHackathonView'
 ]

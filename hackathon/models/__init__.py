@@ -1,5 +1,5 @@
 from .evaluation import Evaluation
-from .organiser import Organiser
+from .organizer import Organiser
 from .submission import Submission
 from .hackathon import Hackathon
 from .registration import Registration

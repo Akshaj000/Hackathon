@@ -10,7 +10,12 @@ class Organiser(models.Model):
 
     user = models.ForeignKey("user.User", on_delete=models.CASCADE)
     hackathon = models.ForeignKey("hackathon.Hackathon", on_delete=models.CASCADE)
-    access = models.CharField(max_length=255, default='editor')
+    access = models.IntegerField(choices=ACCESS_TYPE, default=2)
+
+    class Meta:
+        verbose_name = 'Organiser'
+        verbose_name_plural = 'Organisers'
+        unique_together = (('user', 'hackathon'),)
 
     def __str__(self):
         return self.user.username

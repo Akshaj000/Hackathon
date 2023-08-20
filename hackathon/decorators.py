@@ -1,43 +1,57 @@
-from functools import wraps
-from rest_framework.response import Response
-
 from user.models import User
 
+from functools import wraps
+from rest_framework import status
+from rest_framework.response import Response
+from .models import Hackathon, Organiser
 
-def extract_organiser_ids(func):
-    
-    @wraps(func)
-    def wrapper(self, request, *args, **kwargs):
-        data = request.data
-        organisers = data.get('organisers')
-        if organisers is None:
-            self.organiser_ids = []
-            return func(self, request, *args, **kwargs)
-        if isinstance(organisers, str):
-            organiser_ids = [int(organisers)]
-        elif isinstance(organisers, list):
-            organiser_ids = [int(member_id) for member_id in organisers]
-        else:
-            return Response({
-                'error': {
-                    'code': "INVALID_MEMBERS",
-                    'message': 'Invalid format for members'
-                },
-            }, status=400)
-        if not User.objects.filter(id__in=organiser_ids).exists():
-            return Response({
-                'error': {
-                    'code': "USER_NOT_FOUND",
-                    'message': 'User not found'
-                },
-            }, status=400)
-        self.organiser_ids = organiser_ids
-        return func(self, request, *args, **kwargs)
 
-    return wrapper
+def resolve_hackathon(action):
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(self, request, *args, **kwargs):
+            data = request.data
+            hackathon_id = data.get('id')
+            if not hackathon_id:
+                return Response({
+                    'error': {
+                        'code': "HACKATHON_ID_REQUIRED",
+                        'message': 'Hackathon ID is required'
+                    },
+                }, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                hackathon = Hackathon.objects.get(id=hackathon_id)
+            except Hackathon.DoesNotExist:
+                return Response({
+                    'error': {
+                        'code': "HACKATHON_NOT_FOUND",
+                        'message': 'Hackathon not found'
+                    },
+                }, status=status.HTTP_404_NOT_FOUND)
+            # Apply different access checks based on the action
+            if action == "admin":
+                allowed_access_levels = [0]
+            elif action == "editor":
+                allowed_access_levels = [0, 1]
+            else:
+                allowed_access_levels = [0, 1, 2]
+            if not Organiser.objects.filter(
+                user=request.user,
+                hackathon=hackathon,
+                access__in=allowed_access_levels
+            ).exists():
+                return Response({
+                    'error': {
+                        'code': "ACCESS_DENIED",
+                        'message': 'Access denied'
+                    },
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            self.hackathon = hackathon
+            return view_func(self, request, *args, **kwargs)
+        return wrapper
+    return decorator
 
 
 __all__ = [
-    'extract_organiser_ids',
+    'resolve_hackathon'
 ]
-

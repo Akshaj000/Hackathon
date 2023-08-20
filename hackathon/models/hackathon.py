@@ -14,8 +14,9 @@ class Hackathon(models.Model):
     logo = models.ImageField(upload_to='hackathon/logo', null=True, blank=True)
     cover = models.ImageField(upload_to='hackathon/cover', null=True, blank=True)
 
-    allowedSubmissions = models.CharField(max_length=255, choices=SUBMISSION_TYPE, default='image')
+    allowedSubmissionType = models.CharField(max_length=255, choices=SUBMISSION_TYPE, default='file')
     minimumTeamSize = models.IntegerField(default=0)
+    maximumTeamSize = models.IntegerField(default=0)
     allowIndividual = models.BooleanField(default=False)
 
     startTimestamp = models.DateTimeField()

@@ -8,7 +8,11 @@ from team.views import (
     CreateTeamView, UpdateTeamView, AddTeamMembersView, RemoveTeamMembersView, LeaveTeamView,
     TransferOwnershipView, DeleteTeamView
 )
-from hackathon.views import CreateHackathonView
+from hackathon.views import (
+    PublishHackathonView, UpdateEvaluationView, DeleteHackathonView,
+    EvaluateSubmissionView, AddOrganizerView, RemoveOrganizerView, UpdateHackathonView,
+    CreateSubmissionView, CreateRegistrationView
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -32,5 +36,13 @@ urlpatterns = [
 
 
     # Hackathon
-    path('api/hackathon/create/', CreateHackathonView.as_view()),
+    path('api/hackathon/publish/', PublishHackathonView.as_view()),
+    path('api/hackathon/update/', UpdateHackathonView.as_view()),
+    path('api/hackathon/delete/', DeleteHackathonView.as_view()),
+    path('api/hackathon/evaluate/', EvaluateSubmissionView.as_view()),
+    path('api/hackathon/update-evaluation/', UpdateEvaluationView.as_view()),
+    path('api/hackathon/add-organizer/', AddOrganizerView.as_view()),
+    path('api/hackathon/remove-organizer/', RemoveOrganizerView.as_view()),
+    path('api/hackathon/register/', CreateRegistrationView.as_view()),
+    path('api/hackathon/submit/', CreateSubmissionView.as_view()),
 ]

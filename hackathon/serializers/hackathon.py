@@ -1,8 +1,7 @@
 from enum import Enum
 from rest_framework import serializers
-from hackathon.models import Hackathon, Organiser
-from user.models import User
-from user.serializers import UserSerializer
+from hackathon.models import Hackathon
+from hackathon.serializers.organizer import OrganiserInputSerializer, OrganiserOutputSerializer
 
 
 class SubmissionTypeEnum(Enum):
@@ -11,56 +10,33 @@ class SubmissionTypeEnum(Enum):
     LINK = 'link'
 
 
-class OrganiserAccessEnum(Enum):
-    ADMIN = 0
-    EDITOR = 1
-    VIEWER = 2
-
-
-class HackathonOrganiserSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    access = serializers.ChoiceField(choices=[(access.value, access.name) for access in OrganiserAccessEnum], required=True)
-
-    class Meta:
-        model = Organiser
-        fields = ('user', 'access')
-
-
-class CreateHackathonOrganiserSerializer(HackathonOrganiserSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=True)
-
-    class Meta:
-        model = Organiser
-        fields = ('user', 'access')
-
-
-class HackathonSerializer(serializers.ModelSerializer):
+class HackathonOutputSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=True)
     description = serializers.CharField(required=True)
     logo = serializers.ImageField(required=False)
     cover = serializers.ImageField(required=False)
-    allowedSubmissions = serializers.ChoiceField(choices=[(submission.value, submission.name) for submission in SubmissionTypeEnum], required=True)
+    allowedSubmissionType = serializers.ChoiceField(choices=[(submission.value, submission.name) for submission in SubmissionTypeEnum], required=True)
     minimumTeamSize = serializers.IntegerField(required=True)
     allowIndividual = serializers.BooleanField(required=True)
     startTimestamp = serializers.DateTimeField(required=True)
     endTimestamp = serializers.DateTimeField(required=True)
     pricePool = serializers.IntegerField(required=True)
-    organisers = HackathonOrganiserSerializer(many=True, read_only=True, source='organiser_set')
+    organisers = OrganiserOutputSerializer(many=True, read_only=True, source='organiser_set')
 
     class Meta:
         model = Hackathon
         fields = '__all__'
 
 
-class CreateHackathonSerializer(HackathonSerializer):
-    organisers = CreateHackathonOrganiserSerializer(many=True, source='organiser_set')
+class CreateHackathonInputSerializer(HackathonOutputSerializer):
+    organisers = OrganiserInputSerializer(many=True, source='organiser_set')
 
     class Meta:
         model = Hackathon
         fields = '__all__'
 
 
-class UpdateHackathonSerializer(CreateHackathonSerializer):
+class UpdateHackathonInputSerializer(CreateHackathonInputSerializer):
     id = serializers.IntegerField(required=True)
 
     class Meta:
@@ -68,10 +44,17 @@ class UpdateHackathonSerializer(CreateHackathonSerializer):
         fields = '__all__'
 
 
+class DeleteHackathonInputSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=True)
+    password = serializers.CharField(required=True)
+
+    class Meta:
+        fields = '__all__'
+
+
 __all__ = [
-    'HackathonSerializer',
-    'UpdateHackathonSerializer',
-    'CreateHackathonSerializer',
-    'HackathonOrganiserSerializer',
-    'CreateHackathonOrganiserSerializer',
+    'HackathonOutputSerializer',
+    'UpdateHackathonInputSerializer',
+    'CreateHackathonInputSerializer',
+    'DeleteHackathonInputSerializer'
 ]
