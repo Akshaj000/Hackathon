@@ -1,8 +1,8 @@
-from .hackathon import PublishHackathonView, UpdateHackathonView, DeleteHackathonView
+from .hackathon import PublishHackathonView, UpdateHackathonView, DeleteHackathonView, HackathonView, HackathonListView
 from .evaluation import EvaluateSubmissionView, UpdateEvaluationView
-from .organizer import AddOrganizerView, RemoveOrganizerView
-from .registration import CreateRegistrationView
-from .submission import CreateSubmissionView
+from .organizer import AddOrganizerView, RemoveOrganizerView, OrganizersView
+from .registration import CreateRegistrationView, MyRegistrationsView, RegistrationsView
+from .submission import CreateSubmissionView, SubmissionsView, MySubmissionsView
 
 
 __all__ = [
@@ -14,5 +14,12 @@ __all__ = [
     'AddOrganizerView',
     'RemoveOrganizerView',
     'CreateRegistrationView',
-    'CreateSubmissionView'
+    'CreateSubmissionView',
+    'HackathonView',
+    'HackathonListView',
+    'MyRegistrationsView',
+    'MySubmissionsView',
+    'OrganizersView',
+    'RegistrationsView',
+    'SubmissionsView',
 ]

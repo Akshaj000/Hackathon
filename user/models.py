@@ -39,6 +39,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     is_banned = models.BooleanField(default=False)
+    is_admin = models.BooleanField(default=False)
     meta = models.JSONField(default=dict)
 
     objects = UserManager()

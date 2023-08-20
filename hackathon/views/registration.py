@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from hackathon.decorators import resolve_hackathon
 from hackathon.models import Registration, Hackathon
 from team.models import Team
 from user.authentication import CookieTokenAuthentication
@@ -84,7 +85,31 @@ class CreateRegistrationView(APIView):
         return Response(RegistrationOutputSerializer(registration).data, status=200)
 
 
+class RegistrationsView(APIView):
+    authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @handle_refresh
+    @resolve_hackathon("viewer")
+    def get(self, request):
+        hackathon = self.hackathon
+        registrations = Registration.objects.filter(hackathon=hackathon)
+        return Response(RegistrationOutputSerializer(registrations, many=True).data, status=200)
+
+
+class MyRegistrationsView(APIView):
+    authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @handle_refresh
+    def get(self, request):
+        registrations = Registration.objects.filter(user=request.user)
+        return Response(RegistrationOutputSerializer(registrations, many=True).data, status=200)
+
+
 __all__ = [
-    'CreateRegistrationView'
+    'CreateRegistrationView',
+    'RegistrationsView',
+    'MyRegistrationsView'
 ]
 

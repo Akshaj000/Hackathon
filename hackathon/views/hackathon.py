@@ -137,8 +137,50 @@ class DeleteHackathonView(APIView):
         return Response(status=200)
 
 
+class HackathonView(APIView):
+    authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = HackathonOutputSerializer
+
+    @handle_refresh
+    def get(self, request, *args, **kwargs):
+        data = request.data
+        if not data.get('hackathonID'):
+            return Response({
+                'error': {
+                    'code': 'MISSING_FIELD',
+                    'message': 'hackathonID is required'
+                }
+            }, status=400)
+        try:
+            hackathon = Hackathon.objects.get(id=data.get('hackathonID'))
+        except Hackathon.DoesNotExist:
+            return Response({
+                'error': {
+                    'code': 'INVALID_HACKATHON',
+                    'message': 'Invalid hackathon ID'
+                }
+            }, status=400)
+        serializer = HackathonOutputSerializer(hackathon)
+        return Response(serializer.data, status=200)
+
+
+class HackathonListView(APIView):
+    authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = HackathonOutputSerializer
+
+    @handle_refresh
+    def get(self, request, *args, **kwargs):
+        hackathons = Hackathon.objects.all()
+        serializer = HackathonOutputSerializer(hackathons, many=True)
+        return Response(serializer.data, status=200)
+
+
 __all__ = [
     'PublishHackathonView',
     'UpdateHackathonView',
-    'DeleteHackathonView'
+    'DeleteHackathonView',
+    'HackathonView',
+    'HackathonListView'
 ]

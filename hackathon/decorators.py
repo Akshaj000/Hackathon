@@ -28,6 +28,9 @@ def resolve_hackathon(action):
                         'message': 'Hackathon not found'
                     },
                 }, status=status.HTTP_404_NOT_FOUND)
+            if request.user.is_admin:
+                self.hackathon = hackathon
+                return view_func(self, request, *args, **kwargs)
             # Apply different access checks based on the action
             if action == "admin":
                 allowed_access_levels = [0]

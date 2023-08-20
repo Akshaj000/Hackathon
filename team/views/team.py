@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from team.models import Team, TeamMember
-from user.decorators import handle_refresh
+from user.decorators import handle_refresh, admin_required
 from user.authentication import CookieTokenAuthentication
 from team.serializers import TeamSerializer, CreateTeamSerializer, DeleteTeamSerializer, UpdateTeamSerializer
 from team.decorators import extract_member_ids, resolve_team
@@ -100,8 +100,52 @@ class DeleteTeamView(APIView):
         return Response({}, status=200)
 
 
+class TeamView(APIView):
+    authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = TeamSerializer
+
+    @admin_required
+    @handle_refresh
+    def get(self, request, *args, **kwargs):
+        data = request.data
+        if not data.get('id'):
+            return Response({
+                'error': {
+                    'code': 'TEAM_ID_REQUIRED',
+                    'message': 'Team ID is required'
+                }
+            }, status=400)
+        try:
+            team = Team.objects.get(id=data.get('id'))
+        except Team.DoesNotExist:
+            return Response({
+                'error': {
+                    'code': 'TEAM_NOT_FOUND',
+                    'message': 'Team not found'
+                }
+            }, status=404)
+        serializer = TeamSerializer(team)
+        return Response(serializer.data, status=200)
+
+
+class TeamsView(APIView):
+    authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = TeamSerializer
+
+    @handle_refresh
+    @admin_required
+    def get(self, request, *args, **kwargs):
+        teams = Team.objects.all()
+        serializer = TeamSerializer(teams, many=True)
+        return Response(serializer.data, status=200)
+
+
 __all__ = [
     'CreateTeamView',
     'DeleteTeamView',
-    'UpdateTeamView'
+    'UpdateTeamView',
+    'TeamView',
+    'TeamsView'
 ]

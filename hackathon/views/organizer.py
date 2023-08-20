@@ -92,8 +92,24 @@ class RemoveOrganizerView(APIView):
         return Response(HackathonOutputSerializer(hackathon).data, status=200)
 
 
+class OrganizersView(APIView):
+    authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrganiserInputSerializer
+
+    @handle_refresh
+    @resolve_hackathon("viewer")
+    def get(self, request, *args, **kwargs):
+        hackathon = self.hackathon
+        organisers = Organiser.objects.filter(hackathon=hackathon)
+        return Response({
+            'organisers': OrganiserInputSerializer(organisers, many=True).data
+        }, status=200)
+
+
 __all__ = [
     'AddOrganizerView',
-    'RemoveOrganizerView'
+    'RemoveOrganizerView',
+    'OrganizersView'
 ]
 

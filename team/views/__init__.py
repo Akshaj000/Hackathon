@@ -1,4 +1,4 @@
-from .team import CreateTeamView, DeleteTeamView, UpdateTeamView
+from .team import CreateTeamView, DeleteTeamView, UpdateTeamView, TeamView, TeamsView
 from .teamMember import AddTeamMembersView, RemoveTeamMembersView, LeaveTeamView, TransferOwnershipView
 
 
@@ -9,5 +9,7 @@ __all__ = [
     'RemoveTeamMembersView',
     'LeaveTeamView',
     'TransferOwnershipView',
-    'DeleteTeamView'
+    'DeleteTeamView',
+    'TeamView',
+    'TeamsView'
 ]

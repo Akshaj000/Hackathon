@@ -2,16 +2,20 @@ from django.contrib import admin
 from django.urls import path
 
 from user.views import (
-    UserRegisterView, UserLoginView, UserLogoutView, ProfileView, UpdateProfileView, DeleteAccountView
+    UserRegisterView, UserLoginView, UserLogoutView, UsersView,
+    ProfileView, UpdateProfileView, DeleteAccountView, UserView
 )
 from team.views import (
-    CreateTeamView, UpdateTeamView, AddTeamMembersView, RemoveTeamMembersView, LeaveTeamView,
+    CreateTeamView, UpdateTeamView, AddTeamMembersView, RemoveTeamMembersView,
+    LeaveTeamView, TeamView, TeamsView,
     TransferOwnershipView, DeleteTeamView
 )
 from hackathon.views import (
     PublishHackathonView, UpdateEvaluationView, DeleteHackathonView,
     EvaluateSubmissionView, AddOrganizerView, RemoveOrganizerView, UpdateHackathonView,
-    CreateSubmissionView, CreateRegistrationView
+    CreateSubmissionView, CreateRegistrationView, HackathonView, HackathonListView,
+    MyRegistrationsView, MySubmissionsView, OrganizersView, RegistrationsView,
+    SubmissionsView
 )
 
 urlpatterns = [
@@ -24,6 +28,8 @@ urlpatterns = [
     path('api/user/profile/', ProfileView.as_view()),
     path('api/user/profile/update/', UpdateProfileView.as_view()),
     path('api/user/delete/', DeleteAccountView.as_view()),
+    path('api/user/', UserView.as_view()),
+    path('api/users/', UsersView.as_view()),
 
     # Team
     path('api/team/create/', CreateTeamView.as_view()),
@@ -33,6 +39,8 @@ urlpatterns = [
     path('api/team/remove-members/', RemoveTeamMembersView.as_view()),
     path('api/team/leave/', LeaveTeamView.as_view()),
     path('api/team/transfer-ownership/', TransferOwnershipView.as_view()),
+    path('api/team/', TeamView.as_view()),
+    path('api/teams/', TeamsView.as_view()),
 
 
     # Hackathon
@@ -45,4 +53,11 @@ urlpatterns = [
     path('api/hackathon/remove-organizer/', RemoveOrganizerView.as_view()),
     path('api/hackathon/register/', CreateRegistrationView.as_view()),
     path('api/hackathon/submit/', CreateSubmissionView.as_view()),
+    path('api/hackathon/', HackathonView.as_view()),
+    path('api/hackathons/', HackathonListView.as_view()),
+    path('api/hackathon/registrations/', RegistrationsView.as_view()),
+    path('api/hackathon/submissions/', SubmissionsView.as_view()),
+    path('api/hackathon/my-registrations/', MyRegistrationsView.as_view()),
+    path('api/hackathon/my-submissions/', MySubmissionsView.as_view()),
+    path('api/hackathon/organizers/', OrganizersView.as_view()),
 ]

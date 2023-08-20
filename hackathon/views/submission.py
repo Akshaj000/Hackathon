@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from hackathon.decorators import resolve_hackathon
 from hackathon.models import Submission, Hackathon, Registration
 from user.authentication import CookieTokenAuthentication
 from user.decorators import handle_refresh
@@ -78,11 +79,43 @@ class CreateSubmissionView(APIView):
         if summary:
             submission.summary = summary
         submission.save()
-        return Response({
-            'message': 'Successfully submitted'
-        }, status=200)
+        return Response(SubmissionOutputSerializer(submission).data, status=200)
+
+
+class SubmissionsView(APIView):
+    authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @handle_refresh
+    @resolve_hackathon("viewer")
+    def get(self, request):
+        hackathon = self.hackathon
+        submissions = Submission.objects.filter(hackathon=hackathon)
+        return Response(SubmissionOutputSerializer(submissions, many=True).data, status=200)
+
+
+class MySubmissionsView(APIView):
+    authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @handle_refresh
+    def get(self, request):
+        data = request.data
+        if 'hackathonID' not in data and data['hackathonID'] is None:
+            return Response({
+                'error': {
+                    'code': 'MISSING_FIELD',
+                    'message': 'hackathonID is required'
+                }
+            }, status=400)
+        submissions = Submission.objects.filter(
+            hackathon_id=data['hackathonID']
+        )
+        return Response(SubmissionOutputSerializer(submissions, many=True).data, status=200)
 
 
 __all__ = [
-    'CreateSubmissionView'
+    'CreateSubmissionView',
+    'SubmissionsView',
+    'MySubmissionsView'
 ]
