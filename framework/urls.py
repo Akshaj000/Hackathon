@@ -19,7 +19,7 @@ from hackathon.views import (
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('api/admin/', admin.site.urls),
 
     # User
     path('api/user/signup/', UserRegisterView.as_view()),

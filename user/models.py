@@ -13,6 +13,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, username, password=None, **extra_fields):
+        extra_fields.setdefault('is_admin', True)
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, username, password, **extra_fields)
@@ -40,6 +41,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     is_banned = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
     meta = models.JSONField(default=dict)
 
     objects = UserManager()
