@@ -162,3 +162,16 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Create superuser using environment variables
+if 'DJANGO_SUPERUSER_USERNAME' in os.environ and 'DJANGO_SUPERUSER_EMAIL' in os.environ and 'DJANGO_SUPERUSER_PASSWORD' in os.environ:
+    from django.contrib.auth.models import User
+
+    superuser_username = os.environ['DJANGO_SUPERUSER_USERNAME']
+    superuser_email = os.environ['DJANGO_SUPERUSER_EMAIL']
+    superuser_password = os.environ['DJANGO_SUPERUSER_PASSWORD']
+
+    if not User.objects.filter(username=superuser_username).exists():
+        User.objects.create_superuser(superuser_username, superuser_email, superuser_password)
+
