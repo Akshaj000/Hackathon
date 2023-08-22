@@ -1,6 +1,6 @@
 from .hackathon import (
     HackathonOutputSerializer, UpdateHackathonInputSerializer,
-    CreateHackathonInputSerializer, DeleteHackathonInputSerializer
+    CreateHackathonInputSerializer, DeleteHackathonInputSerializer, GetHackathonInputSerializer
 )
 from .registration import RegistrationOutputSerializer, RegistrationInputSerializer
 from .submission import (
@@ -21,5 +21,6 @@ __all__ = [
     'EvaluationOutputSerializer',
     'EvaluationInputSerializer',
     'OrganiserInputSerializer',
-    'OrganiserOutputSerializer'
+    'OrganiserOutputSerializer',
+    'GetHackathonInputSerializer'
 ]

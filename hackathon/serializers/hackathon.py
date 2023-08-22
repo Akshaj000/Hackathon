@@ -17,6 +17,7 @@ class HackathonOutputSerializer(serializers.ModelSerializer):
     cover = serializers.ImageField(required=False)
     allowedSubmissionType = serializers.ChoiceField(choices=[(submission.value, submission.name) for submission in SubmissionTypeEnum], required=True)
     minimumTeamSize = serializers.IntegerField(required=True)
+    maximumTeamSize = serializers.IntegerField(required=True)
     allowIndividual = serializers.BooleanField(required=True)
     startTimestamp = serializers.DateTimeField(required=True)
     endTimestamp = serializers.DateTimeField(required=True)
@@ -30,6 +31,9 @@ class HackathonOutputSerializer(serializers.ModelSerializer):
 
 class CreateHackathonInputSerializer(HackathonOutputSerializer):
     organisers = OrganiserInputSerializer(many=True, source='organiser_set')
+    minimumTeamSize = serializers.IntegerField(required=False, default=0)
+    maximumTeamSize = serializers.IntegerField(required=False, default=0)
+    allowIndividual = serializers.BooleanField(required=False, default=False)
 
     class Meta:
         model = Hackathon
@@ -52,9 +56,17 @@ class DeleteHackathonInputSerializer(serializers.Serializer):
         fields = '__all__'
 
 
+class GetHackathonInputSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=True)
+
+    class Meta:
+        fields = '__all__'
+
+
 __all__ = [
     'HackathonOutputSerializer',
     'UpdateHackathonInputSerializer',
     'CreateHackathonInputSerializer',
-    'DeleteHackathonInputSerializer'
+    'DeleteHackathonInputSerializer',
+    'GetHackathonInputSerializer'
 ]

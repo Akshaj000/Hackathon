@@ -21,7 +21,7 @@ class CreateTeamSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=True)
     name = serializers.CharField(required=False)
     description = serializers.CharField(required=False)
-    members = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
+    members = serializers.ListSerializer(child=serializers.IntegerField(), required=True)
 
     class Meta:
         model = Team

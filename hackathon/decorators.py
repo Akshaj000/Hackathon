@@ -19,6 +19,7 @@ def resolve_hackathon(action):
                         'message': 'Hackathon ID is required'
                     },
                 }, status=status.HTTP_400_BAD_REQUEST)
+            print(hackathon_id)
             try:
                 hackathon = Hackathon.objects.get(id=hackathon_id)
             except Hackathon.DoesNotExist:

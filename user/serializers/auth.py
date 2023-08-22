@@ -1,8 +1,7 @@
 from django.db.models import Q
 from rest_framework import serializers
+
 from user.models import User
-
-
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.utils.translation import gettext_lazy as _
 
@@ -55,25 +54,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
 
 
-class UserSerializer(serializers.ModelSerializer):
-    avatar = serializers.ImageField(max_length=None, use_url=True, required=False)
-
-    class Meta:
-        model = User
-        fields = ('username', 'email', 'name', 'bio', 'avatar')
-
-
-class DeleteProfileSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(required=True)
-
-    class Meta:
-        model = User
-        fields = ('password',)
-
-
 __all__ = [
     'UserRegistrationSerializer',
-    'UserLoginSerializer',
-    'UserSerializer',
-    'DeleteProfileSerializer'
+    'UserLoginSerializer'
 ]

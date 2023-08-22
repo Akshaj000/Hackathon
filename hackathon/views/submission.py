@@ -8,7 +8,7 @@ from hackathon.decorators import resolve_hackathon
 from hackathon.models import Submission, Hackathon, Registration
 from user.authentication import CookieTokenAuthentication
 from user.decorators import handle_refresh
-from hackathon.serializers import SubmissionInputSerializer, SubmissionOutputSerializer
+from hackathon.serializers import SubmissionInputSerializer, SubmissionOutputSerializer, GetHackathonInputSerializer
 
 
 class CreateSubmissionView(APIView):
@@ -36,6 +36,13 @@ class CreateSubmissionView(APIView):
         registration = Registration.objects.filter(
             Q(hackathon=hackathon) & Q(Q(user=request.user) | Q(team__teammember__user=request.user))
         )
+        if hackathon.submission_set.filter(user=request.user).exists():
+            return Response({
+                'error': {
+                    'code': 'ALREADY_SUBMITTED',
+                    'message': 'You have already submitted your project'
+                }
+            }, status=400)
         if not registration.exists():
             return Response({
                 'error': {
@@ -44,21 +51,21 @@ class CreateSubmissionView(APIView):
                 }
             }, status=400)
         registration = registration.first()
-        if registration.hackathon.allowedSubmissions == "file" and not file:
+        if registration.hackathon.allowedSubmissionType == "file" and not file:
             return Response({
                 'error': {
                     'code': 'MISSING_FIELD',
                     'message': 'file is required'
                 }
             }, status=400)
-        if registration.hackathon.allowedSubmissions == "link" and not link:
+        if registration.hackathon.allowedSubmissionType == "link" and not link:
             return Response({
                 'error': {
                     'code': 'MISSING_FIELD',
                     'message': 'link is required'
                 }
             }, status=400)
-        if registration.hackathon.allowedSubmissions == "image" and not image:
+        if registration.hackathon.allowedSubmissionType == "image" and not image:
             return Response({
                 'error': {
                     'code': 'MISSING_FIELD',
@@ -70,11 +77,11 @@ class CreateSubmissionView(APIView):
             user=request.user,
             team=registration.team
         )
-        if registration.hackathon.allowedSubmissions == "file":
+        if registration.hackathon.allowedSubmissionType == "file":
             submission.file = file
-        if registration.hackathon.allowedSubmissions == "link":
+        if registration.hackathon.allowedSubmissionType == "link":
             submission.link = link
-        if registration.hackathon.allowedSubmissions == "image":
+        if registration.hackathon.allowedSubmissionType == "image":
             submission.image = image
         if summary:
             submission.summary = summary
@@ -97,11 +104,12 @@ class SubmissionsView(APIView):
 class MySubmissionsView(APIView):
     authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
+    serializer_class = GetHackathonInputSerializer
 
     @handle_refresh
-    def get(self, request):
+    def post(self, request):
         data = request.data
-        if 'hackathonID' not in data and data['hackathonID'] is None:
+        if 'id' not in data and data['id'] is None:
             return Response({
                 'error': {
                     'code': 'MISSING_FIELD',
@@ -109,7 +117,7 @@ class MySubmissionsView(APIView):
                 }
             }, status=400)
         submissions = Submission.objects.filter(
-            hackathon_id=data['hackathonID']
+            hackathon_id=data['id']
         )
         return Response(SubmissionOutputSerializer(submissions, many=True).data, status=200)
 

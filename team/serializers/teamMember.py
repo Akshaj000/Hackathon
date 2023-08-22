@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from team.models import Team, TeamMember
-from user.models import User
 from user.serializers import UserSerializer
 
 
@@ -15,14 +14,33 @@ class TeamMemberSerializer(serializers.ModelSerializer):
 
 class UpdateTeamMemberSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=True)
-    members = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
+    members = serializers.ListSerializer(child=serializers.IntegerField(), required=True)
 
     class Meta:
         model = Team
         fields = ('id', 'members')
 
 
+class TeamGetInputSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = Team
+        fields = ('id',)
+
+
+class TransferOwnershipSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=True)
+    userID = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = Team
+        fields = ('id', 'userID')
+
+
 __all__ = [
     'TeamMemberSerializer',
-    'UpdateTeamMemberSerializer'
+    'UpdateTeamMemberSerializer',
+    'TeamGetInputSerializer',
+    'TransferOwnershipSerializer'
 ]

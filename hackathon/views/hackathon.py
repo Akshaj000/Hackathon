@@ -6,7 +6,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from hackathon.decorators import resolve_hackathon
 from hackathon.models import Hackathon, Organiser
 from user.authentication import CookieTokenAuthentication
-from hackathon.serializers import HackathonOutputSerializer, CreateHackathonInputSerializer, DeleteHackathonInputSerializer
+from hackathon.serializers import HackathonOutputSerializer, CreateHackathonInputSerializer, DeleteHackathonInputSerializer, UpdateHackathonInputSerializer
 from user.decorators import handle_refresh
 from user.models import User
 
@@ -28,7 +28,7 @@ class PublishHackathonView(APIView):
                         'message': f'{fields} is required'
                     }
                 }, status=400)
-        if not (data.get('maximumTeamSize') and data.get('minimumTeamSize')) and data.get('allowIndividual'):
+        if not (data.get('maximumTeamSize') and data.get('minimumTeamSize')) and not data.get('allowIndividual'):
             return Response({
                 'error': {
                     'code': 'MISSING_FIELD',
@@ -36,14 +36,17 @@ class PublishHackathonView(APIView):
                 }
             }, status=400)
 
+        minimumTeamSize = data['minimumTeamSize'] if data['minimumTeamSize'].strip() != '' else 0
+        maximumTeamSize = data['maximumTeamSize'] if data['maximumTeamSize'].strip() != '' else 0
+        allowIndividual = data['allowIndividual'] == 'true' if 'allowIndividual' in data else False
         # Create hackathon
         hackathon = Hackathon.objects.create(
             title=data.get('title'),
             description=data.get('description'),
-            allowedSubmissions=data.get('allowedSubmissions'),
-            maximumTeamSize=data.get('maximumTeamSize', 0),
-            minimumTeamSize=data.get('minimumTeamSize', 0),
-            allowIndividual=data.get('allowIndividual', False),
+            allowedSubmissionType=data.get('allowedSubmissionType'),
+            maximumTeamSize=maximumTeamSize,
+            minimumTeamSize=minimumTeamSize,
+            allowIndividual=allowIndividual,
             startTimestamp=data.get('startTimestamp'),
             endTimestamp=data.get('endTimestamp'),
             pricePool=data.get('pricePool'),
@@ -82,7 +85,7 @@ class PublishHackathonView(APIView):
 class UpdateHackathonView(APIView):
     authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    serializer_class = CreateHackathonInputSerializer
+    serializer_class = UpdateHackathonInputSerializer
 
     @handle_refresh
     @resolve_hackathon("editor")
@@ -100,9 +103,14 @@ class UpdateHackathonView(APIView):
         if data.get('allowedSubmissionType'):
             hackathon.allowedSubmissionType = data.get('allowedSubmissionType')
         if data.get('minimumTeamSize'):
-            hackathon.minimumTeamSize = data.get('minimumTeamSize')
-        if data.get('allowIndividual'):
-            hackathon.allowIndividual = data.get('allowIndividual')
+            minimumTeamSize = data['minimumTeamSize']
+            hackathon.minimumTeamSize = minimumTeamSize
+        if data.get('maximumTeamSize'):
+            maximumTeamSize = data['maximumTeamSize']
+            hackathon.maximumTeamSize = maximumTeamSize
+        if data.get('allowIndividual') is not None:
+            allowIndividual = data['allowIndividual']
+            hackathon.allowIndividual = allowIndividual
         if data.get('startTimestamp'):
             hackathon.startTimestamp = data.get('startTimestamp')
         if data.get('endTimestamp'):

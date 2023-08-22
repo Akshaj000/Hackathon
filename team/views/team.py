@@ -6,7 +6,8 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from team.models import Team, TeamMember
 from user.decorators import handle_refresh, admin_required
 from user.authentication import CookieTokenAuthentication
-from team.serializers import TeamSerializer, CreateTeamSerializer, DeleteTeamSerializer, UpdateTeamSerializer
+from team.serializers import TeamSerializer, CreateTeamSerializer, DeleteTeamSerializer, UpdateTeamSerializer, \
+    TeamGetInputSerializer
 from team.decorators import extract_member_ids, resolve_team
 
 
@@ -72,6 +73,7 @@ class UpdateTeamView(APIView):
             team.name = data.get('name')
         if data.get('description'):
             team.description = data.get('description')
+        team.save()
         serializer = TeamSerializer(team)
         return Response(serializer.data, status=200)
 
@@ -103,11 +105,11 @@ class DeleteTeamView(APIView):
 class TeamView(APIView):
     authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    serializer_class = TeamSerializer
+    serializer_class = TeamGetInputSerializer
 
     @admin_required
     @handle_refresh
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         data = request.data
         if not data.get('id'):
             return Response({

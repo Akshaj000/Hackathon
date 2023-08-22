@@ -7,7 +7,8 @@ from team.models import TeamMember
 from user.decorators import handle_refresh
 from user.models import User
 from user.authentication import CookieTokenAuthentication
-from team.serializers import TeamSerializer, UpdateTeamMemberSerializer
+from team.serializers import TeamSerializer, UpdateTeamMemberSerializer, TeamGetInputSerializer, \
+    TransferOwnershipSerializer
 from team.decorators import resolve_team, extract_member_ids
 
 
@@ -46,10 +47,23 @@ class AddTeamMembersView(APIView):
                     'message': 'Cannot add self to team'
                 },
             }, status=400)
+        if User.objects.filter(id__in=member_user_ids).count() != len(member_user_ids):
+            return Response({
+                'error': {
+                    'code': "USER_NOT_FOUND",
+                    'message': 'One or more users are not found'
+                },
+            }, status=400)
+        if team.teammember_set.filter(user_id__in=member_user_ids).exists():
+            return Response({
+                'error': {
+                    'code': "USER_ALREADY_IN_TEAM",
+                    'message': 'One or more users are already in the team'
+                },
+            }, status=400)
         for userID in member_user_ids:
-            user = User.objects.get(id=userID)
             TeamMember.objects.create(
-                user=user,
+                user_id=userID,
                 team=team
             )
         serializer = TeamSerializer(team)
@@ -89,7 +103,15 @@ class RemoveTeamMembersView(APIView):
             }, status=400)
         remove_member_list = self.member_ids
         for user_id in remove_member_list:
-            TeamMember.objects.get(user_id=user_id, team=team).delete()
+            try:
+                TeamMember.objects.get(user_id=user_id, team=team).delete()
+            except TeamMember.DoesNotExist:
+                return Response({
+                    'error': {
+                        'code': "USER_NOT_IN_TEAM",
+                        'message': 'User is not in the team'
+                    },
+                }, status=400)
         serializer = TeamSerializer(team)
         return Response(serializer.data, status=200)
 
@@ -97,13 +119,13 @@ class RemoveTeamMembersView(APIView):
 class LeaveTeamView(APIView):
     authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    serializer_class = UpdateTeamMemberSerializer
+    serializer_class = TeamGetInputSerializer
 
     @resolve_team
     @handle_refresh
     def post(self, request, *args, **kwargs):
         team = self.team
-        if team.members.filter(user=request.user, isOwner=True).exists():
+        if team.teammember_set.filter(user=request.user, isOwner=True).exists():
             return Response({
                 'error': {
                     'code': "CANNOT_LEAVE_TEAM",
@@ -121,13 +143,13 @@ class LeaveTeamView(APIView):
 class TransferOwnershipView(APIView):
     authentication_classes = [CookieTokenAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    serializer_class = UpdateTeamMemberSerializer
+    serializer_class = TransferOwnershipSerializer
 
     @resolve_team
     @handle_refresh
     def post(self, request, *args, **kwargs):
         data = request.data
-        newOwnerID = data.get('newOwnerID')
+        newOwnerID = data.get('userID')
         team = self.team
         if not newOwnerID:
             return Response({
@@ -136,7 +158,7 @@ class TransferOwnershipView(APIView):
                     'message': 'New owner ID is required'
                 },
             }, status=400)
-        if not team.members.filter(user=request.user, isOwner=True).exists():
+        if not team.teammember_set.filter(user=request.user, isOwner=True).exists():
             return Response({
                 'error': {
                     'code': "CANNOT_TRANSFER_OWNERSHIP",
@@ -144,17 +166,17 @@ class TransferOwnershipView(APIView):
                 },
             }, status=400)
         newOwner = User.objects.get(id=newOwnerID)
-        if not team.members.filter(user=newOwner).exists():
+        if not team.teammember_set.filter(user=newOwner).exists():
             return Response({
                 'error': {
                     'code': "USER_NOT_IN_TEAM",
                     'message': 'User is not in the team'
                 },
             }, status=400)
-        teamMember = team.members.get(user=newOwner)
+        teamMember = team.teammember_set.get(user=newOwner)
         teamMember.isOwner = True
         teamMember.save()
-        teamMember = team.members.get(user=request.user)
+        teamMember = team.teammember_set.get(user=request.user)
         teamMember.isOwner = False
         teamMember.save()
         serializer = TeamSerializer(team)
